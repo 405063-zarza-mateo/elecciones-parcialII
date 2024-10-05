@@ -13,6 +13,6 @@ public class Seccion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    int id;
+    Long id;
     String nombre;
 }

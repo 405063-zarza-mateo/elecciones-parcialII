@@ -1,13 +1,18 @@
 package ar.edu.utn.frc.tup.lc.iv.services;
 
+import ar.edu.utn.frc.tup.lc.iv.dtos.DistritoDto;
 import ar.edu.utn.frc.tup.lc.iv.models.Distrito;
 import ar.edu.utn.frc.tup.lc.iv.repository.DistritoRepository;
+import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.lang.reflect.Array;
 import java.util.List;
@@ -25,24 +30,50 @@ class DistritoServiceTest {
     @Mock
     RestTemplate restTemplate;
 
+    @InjectMocks
     private DistritoService distritoService;
-    Distrito[] distritos;
+
+    DistritoDto[] distritos;
     ResponseEntity response;
 
     @BeforeEach
     void setUp() {
-        Distrito distrito = new Distrito();
-        distrito.setId(1);
-        distrito.setNombre("Cordoba");
-        distritos = List.of(distrito).toArray(new Distrito[0]);
+        DistritoDto distrito = new DistritoDto(1l, "Cordoba");
+        distritos = List.of(distrito).toArray(new DistritoDto[0]);
+        response = new ResponseEntity(HttpStatus.ACCEPTED);
     }
 
 
     @Test
     void getDistritos() {
-//    doNothing().when(restTemplate).getForEntity(any(),any());
-        doReturn(distritos).when(restTemplate).getForEntity(any(),any());
-        distritoService.getDistritos(1l, "c");
+        Long id = 1L;
+        String nombre = "Distrito1";
+
+        when(restTemplate.getForEntity(anyString(), eq(DistritoDto[].class)))
+                .thenReturn(ResponseEntity.ok(distritos));
+
+        List<DistritoDto> result = distritoService.getDistritos(id, nombre);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(restTemplate).getForEntity(anyString(), eq(DistritoDto[].class));
+
+    }
+
+    @Test
+    void getDistritosNoResults() {
+        Long id = 1L;
+        String nombre = "Distrito1";
+
+        when(restTemplate.getForEntity(anyString(), eq(DistritoDto[].class)))
+                .thenReturn(ResponseEntity.ofNullable(null));
+
+        List<DistritoDto> result = distritoService.getDistritos(id, nombre);
+
+        assertNotNull(result);
+        assertEquals(0, result.size());
+        verify(restTemplate).getForEntity(anyString(), eq(DistritoDto[].class));
+
     }
 
     @Test

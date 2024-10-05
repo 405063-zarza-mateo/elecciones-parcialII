@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class DistritoDto {
     @JsonProperty("distritoId")
-    int id;
+    Long id;
     @JsonProperty("distritoNombre")
     String nombre;
 }

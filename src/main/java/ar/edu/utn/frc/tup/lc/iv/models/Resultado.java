@@ -13,8 +13,8 @@ public class Resultado {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    int orden;
+    Long orden;
     String nombre;
-    int votos;
-    double porcentaje;
+    Integer votos;
+    Double porcentaje;
 }

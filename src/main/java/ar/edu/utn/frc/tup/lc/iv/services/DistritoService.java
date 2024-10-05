@@ -2,12 +2,16 @@ package ar.edu.utn.frc.tup.lc.iv.services;
 
 import ar.edu.utn.frc.tup.lc.iv.dtos.CargosDto;
 import ar.edu.utn.frc.tup.lc.iv.dtos.DistritoDto;
+import ar.edu.utn.frc.tup.lc.iv.dtos.SeccionDto;
 import ar.edu.utn.frc.tup.lc.iv.dtos.common.CustomException;
+import ar.edu.utn.frc.tup.lc.iv.models.Cargo;
+import ar.edu.utn.frc.tup.lc.iv.models.Distrito;
 import ar.edu.utn.frc.tup.lc.iv.repository.DistritoRepository;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -17,6 +21,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class DistritoService {
@@ -51,27 +56,50 @@ public class DistritoService {
         }
     }
 
-    public CargosDto getCargos(Long distritoId, Long cargoId) {
+    public CargosDto[] getCargos(Long distritoId, Long cargoId) {
         try {
+
             String url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/cargos")
-                    .queryParam("distrito_id", distritoId)
-                    .queryParam("cargo_id", cargoId)
+                .queryParam("distritoId", distritoId)
+                .queryParam("cargoId", cargoId)
+                .toUriString();
+
+        CargosDto[] cargosResponse = restTemplate.getForEntity(url, CargosDto[].class).getBody();
+
+        for (CargosDto cargosDto : cargosResponse) {
+//            Distrito distrito = distritoRepository.findById(cargosDto.getDistritoId()).orElse(new Distrito());
+            DistritoDto distrito = getDistritos(cargosDto.getDistritoId(), null).get(0);
+
+            cargosDto.setDistrito(distrito);
+        }
+
+        return cargosResponse;
+        } catch (
+                RestClientException e) {
+            throw new CustomException("Error al obtener los cargos:" + e.getMessage(), HttpStatus.BAD_REQUEST);
+
+        }
+    }
+
+    public SeccionDto[] getSecciones(Long id){
+        try {
+
+            String url = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/secciones")
+                    .queryParam("distritoNombre", "")
+                    .queryParam("distritoId", id)
                     .toUriString();
 
+            SeccionDto[] seccionResponse = restTemplate.getForEntity(url, SeccionDto[].class).getBody();
 
-            CargosDto cargos = restTemplate.getForObject(url, CargosDto.class);
-
-            if (cargos == null) {
-                throw new CustomException("No se pudieron obtener los cargos", HttpStatus.NOT_FOUND);
+            for (SeccionDto seccionDto : seccionResponse) {
+                seccionDto.setDistritoNombre(getDistritos(seccionDto.getDistritoId(), "").get(0).getNombre());
             }
 
-            return cargos;
-        } catch (HttpClientErrorException e) {
-            throw new CustomException("Error al obtener los cargos: " + e.getResponseBodyAsString(), (HttpStatus) e.getStatusCode());
-        } catch (HttpServerErrorException e) {
-            throw new CustomException("Error del servidor al obtener los cargos: " + e.getResponseBodyAsString(), (HttpStatus) e.getStatusCode());
-        } catch (RestClientException e) {
-            throw new CustomException("Error de conexión al obtener los cargos: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return seccionResponse;
+        } catch (
+                RestClientException e) {
+            throw new CustomException("Error al obtener los cargos:" + e.getMessage(), HttpStatus.BAD_REQUEST);
+
         }
     }
 }
